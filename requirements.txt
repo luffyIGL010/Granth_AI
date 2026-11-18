@@ -1,0 +1,10 @@
+pymupdf
+chromadb
+sentence-transformers
+easyocr
+numpy
+ollama
+Pillow
+fastapi
+uvicorn
+youtube-transcript-api
