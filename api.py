@@ -2,6 +2,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from chat import chat_reply, reset_chat
+
 
 from rag import (
     retrieve_context,
@@ -44,6 +46,10 @@ app.add_middleware(
 class QuestionRequest(BaseModel):
     question: str
 
+
+class ChatRequest(BaseModel):
+    session_id: str
+    message: str
 
 def validate_question(question):
 
@@ -239,4 +245,35 @@ def ask_all(request: QuestionRequest):
         "question": question,
         "pdf": pdf_result,
         "youtube": video_result
+    }
+
+
+
+@app.post("/chat")
+def chat(request: ChatRequest):
+
+    message = request.message.strip()
+
+    if not message:
+        raise HTTPException(
+            status_code=400,
+            detail="Please enter a message."
+        )
+
+    try:
+        reply, suggestions = chat_reply(
+            request.session_id,
+            message
+        )
+    except Exception as error:
+        print(f"Chat error: {error}")
+        raise HTTPException(
+            status_code=500,
+            detail="Chat model se jawab nahi aaya."
+        )
+
+    return {
+        "session_id": request.session_id,
+        "reply": reply,
+        "suggestions": suggestions
     }
