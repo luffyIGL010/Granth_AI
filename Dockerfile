@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# torch + torchvision ko ek saath CPU build par align karo
+
 RUN pip install --force-reinstall --no-deps torch torchvision \
     --index-url https://download.pytorch.org/whl/cpu
 
