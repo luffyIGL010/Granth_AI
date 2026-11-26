@@ -4,6 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from chat import chat_reply, reset_chat
 
+from database import (
+    get_all_conversations,
+    get_conversation,
+    get_messages,
+    delete_conversation
+)
+
 
 from rag import (
     retrieve_context,
@@ -276,4 +283,68 @@ def chat(request: ChatRequest):
         "session_id": request.session_id,
         "reply": reply,
         "suggestions": suggestions
+    }
+
+
+
+
+# ==========================================
+# CHAT HISTORY API
+# ==========================================
+
+@app.get("/conversations")
+def list_conversations():
+
+    conversations = get_all_conversations(limit=50)
+
+    return {
+        "total": len(conversations),
+        "conversations": conversations
+    }
+
+
+# ==========================================
+# GET SINGLE CONVERSATION
+# ==========================================
+
+@app.get("/conversations/{session_id}")
+def get_chat_history(session_id: str):
+
+    conversation = get_conversation(session_id)
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found."
+        )
+
+    messages = get_messages(session_id)
+
+    return {
+        "conversation": conversation,
+        "messages": messages
+    }
+
+
+# ==========================================
+# DELETE CONVERSATION
+# ==========================================
+
+@app.delete("/conversations/{session_id}")
+def remove_conversation(session_id: str):
+
+    deleted = delete_conversation(session_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found."
+        )
+
+    # Clear in-memory session too
+    reset_chat(session_id)
+
+    return {
+        "message": "Conversation deleted successfully.",
+        "session_id": session_id
     }

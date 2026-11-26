@@ -202,3 +202,21 @@ def get_all_conversations(limit=50):
 # ==========================================
 
 init_db()
+
+
+
+
+# ==========================================
+# DELETE CONVERSATION
+# ==========================================
+
+def delete_conversation(session_id):
+
+    with get_connection() as connection:
+
+        cursor = connection.execute("""
+            DELETE FROM conversations
+            WHERE session_id = ?
+        """, (session_id,))
+
+        return cursor.rowcount > 0
