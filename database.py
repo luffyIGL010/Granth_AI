@@ -241,3 +241,31 @@ def delete_conversation(session_id):
         """, (session_id,))
 
         return cursor.rowcount > 0
+
+
+
+
+
+
+# ==========================================
+# SAVE USER MEMORY
+# ==========================================
+
+def save_memory(user_id, memory, category="general"):
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    with get_connection() as connection:
+
+        cursor = connection.execute("""
+            INSERT INTO user_memories (
+                user_id,
+                memory,
+                category,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_id, memory, category, now, now))
+
+        return cursor.lastrowid
