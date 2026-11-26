@@ -58,6 +58,27 @@ def init_db():
         """)
 
 
+
+
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS user_memories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                memory TEXT NOT NULL,
+                category TEXT DEFAULT 'general',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+
+        connection.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_user_memories_user_id
+            ON user_memories(user_id)
+        """)
+
+
+
 # ==========================================
 # CREATE CONVERSATION
 # ==========================================
