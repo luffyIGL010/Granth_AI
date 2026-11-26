@@ -170,8 +170,8 @@ from database import (
     save_message,
     update_summary
 )
-
-
+from database import get_user_memories
+from memory import extract_memories
 # ==========================================
 # CONFIGURATION
 # ==========================================
@@ -398,6 +398,24 @@ def chat_reply(session_id, message):
 
     # Build system prompt
     system = SYSTEM_PROMPT
+        # Retrieve user's personal memories
+    USER_ID = "user_001"
+
+    memories = get_user_memories(USER_ID)
+
+    if memories:
+        memory_text = "\n".join(
+            f"- {item['memory']}"
+            for item in memories
+        )
+
+        system += (
+            "\n\nUser ki saved personal memories:\n"
+            + memory_text
+            + "\n\nIn memories ko relevant hone par naturally use karo. "
+            "Har response mein inka zikr zaroori nahi hai. "
+            "Kisi memory ko lekar assumption mat banao."
+        )
 
     if session["summary"]:
 
@@ -454,6 +472,17 @@ def chat_reply(session_id, message):
         "assistant",
         reply
     )
+
+
+        # Automatically extract and save user memories
+    USER_ID = "user_001"
+
+    conversation_text = "\n".join(
+        f"{item['role']}: {item['content']}"
+        for item in history
+    )
+
+    extract_memories(USER_ID, conversation_text)
 
     # Summarize older messages
     if len(history) > SUMMARIZE_AFTER:

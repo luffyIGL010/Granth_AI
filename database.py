@@ -251,11 +251,31 @@ def delete_conversation(session_id):
 # SAVE USER MEMORY
 # ==========================================
 
+
+# ==========================================
+# SAVE USER MEMORY (DUPLICATE PREVENTION)
+# ==========================================
+
 def save_memory(user_id, memory, category="general"):
 
     now = datetime.now(timezone.utc).isoformat()
 
+    memory = memory.strip()
+
+    if not memory:
+        return None
+
     with get_connection() as connection:
+
+        existing = connection.execute("""
+            SELECT id
+            FROM user_memories
+            WHERE user_id = ?
+            AND LOWER(TRIM(memory)) = LOWER(TRIM(?))
+        """, (user_id, memory)).fetchone()
+
+        if existing:
+            return existing["id"]
 
         cursor = connection.execute("""
             INSERT INTO user_memories (
@@ -269,3 +289,64 @@ def save_memory(user_id, memory, category="general"):
         """, (user_id, memory, category, now, now))
 
         return cursor.lastrowid
+
+
+
+
+
+# ==========================================
+# GET USER MEMORIES
+# ==========================================
+
+def get_user_memories(user_id):
+
+    with get_connection() as connection:
+
+        rows = connection.execute("""
+            SELECT id, memory, category, created_at, updated_at
+            FROM user_memories
+            WHERE user_id = ?
+            ORDER BY updated_at DESC
+        """, (user_id,)).fetchall()
+
+        return [dict(row) for row in rows]
+
+
+
+# ==========================================
+# UPDATE USER MEMORY
+# ==========================================
+
+def update_memory(memory_id, user_id, new_memory, category=None):
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    with get_connection() as connection:
+
+        cursor = connection.execute("""
+            UPDATE user_memories
+            SET memory = ?,
+                category = COALESCE(?, category),
+                updated_at = ?
+            WHERE id = ? AND user_id = ?
+        """, (new_memory, category, now, memory_id, user_id))
+
+        return cursor.rowcount > 0
+
+
+
+
+# ==========================================
+# DELETE USER MEMORY
+# ==========================================
+
+def delete_memory(memory_id, user_id):
+
+    with get_connection() as connection:
+
+        cursor = connection.execute("""
+            DELETE FROM user_memories
+            WHERE id = ? AND user_id = ?
+        """, (memory_id, user_id))
+
+        return cursor.rowcount > 0
